@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CashNest - Banking App</title>
+<style>
+  /* Reset & basics */
+  * { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  body, html { height:100%; background:#f0f4f9; color:#333; }
+  #app { max-width:480px; margin: auto; background:#fff; min-height:100vh; display:flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  header { background:#2b7cff; color:#fff; padding:1.2rem; text-align:center; }
+  header h1 { font-weight: 700; font-size:1.8rem; }
+  main { flex:1; padding: 1rem; overflow-y:auto; }
+  footer { background:#eee; padding: 0.5rem; display:flex; justify-content: space-around; }
+  footer button { background:none; border:none; font-weight:700; color:#2b7cff; font-size:1rem; cursor:pointer; }
+  footer button.active { border-bottom: 2.5px solid #2b7cff; padding-bottom:0.2rem; }
+  input, select, button { font-size: 1rem; padding: 0.6rem; border-radius: 6px; border: 1px solid #ccc; width: 100%; margin-top: 1rem; }
+  button.primary { background:#2b7cff; color:#fff; border:none; cursor:pointer; transition: background 0.3s ease; }
+  button.primary:hover { background:#1a54cc; }
+  .link-button { background:none; border:none; color:#2b7cff; cursor:pointer; text-decoration: underline; font-size:0.9rem; margin-top:0.5rem; }
+  .hidden { display:none !important; }
+  h2 { margin-bottom: 0.5rem; color:#2b7cff; }
+  p { margin:0.3rem 0; }
+  .balance { font-size: 1.6rem; color:#16a34a; margin:1rem 0; font-weight:700; }
+  .section-title { margin-top: 1.5rem; font-weight:700; color:#444; border-bottom: 1px solid #ccc; padding-bottom:0.3rem; }
+  .transaction-list { max-height: 200px; overflow-y:auto; border: 1px solid #ddd; padding: 0.5rem; margin-top: 0.8rem; border-radius:6px; background:#fafafa; }
+  .transaction-list div { font-size: 0.9rem; padding: 0.3rem 0; border-bottom: 1px solid #eee; }
+  .transaction-list div:last-child { border-bottom:none; }
+  .info-label { font-weight: 600; color:#555; }
+  .info-value { margin-left: 0.6rem; }
+  .profile-item { margin-bottom: 1rem; }
+  .loan-offer { background:#dbeafe; border-radius:8px; padding:1rem; margin-top:1rem; }
+  .loan-offer h3 { margin-bottom:0.5rem; color:#1e40af; }
+  .scan-pay { margin-top:1rem; text-align:center; }
+  .scan-pay p { margin:0.6rem 0; }
+  .notification-toggle { display: flex; align-items: center; margin-top: 1rem; }
+  .notification-toggle input { margin-right: 0.6rem; }
+  .error { color: #b91c1c; font-size: 0.9rem; margin-top: 0.4rem; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- LOGIN PAGE -->
+  <section id="login-section">
+    <header>
+      <h1>CashNest</h1>
+      <p>Secure Login</p>
+    </header>
+    <main>
+      <label for="password-input" class="info-label">Enter Password:</label>
+      <input type="password" id="password-input" placeholder="Password" autocomplete="off" />
+      <button class="primary" id="login-btn">Login</button>
+      <button class="link-button" id="forgot-password-btn">Forgot Password?</button>
+      <p id="login-error" class="error hidden">Incorrect password, try again.</p>
+    </main>
+  </section>
+
+  <!-- FORGOT PASSWORD PAGE -->
+  <section id="forgot-password-section" class="hidden">
+    <header>
+      <h1>CashNest</h1>
+      <p>Forgot Password</p>
+    </header>
+    <main>
+      <p>Sorry, this is a demo. To reset password, please refresh the page.</p>
+      <button class="primary" id="back-to-login-btn">Back to Login</button>
+    </main>
+  </section>
+
+  <!-- MAIN APP PAGES -->
+  <section id="app-section" class="hidden" style="display:flex; flex-direction: column; height:100%;">
+    <header>
+      <h1>CashNest</h1>
+      <p>Welcome, Sukhdev Mondal</p>
+    </header>
+    <main id="main-content" style="flex:1; overflow-y:auto; padding: 1rem;">
+
+      <!-- Home Page -->
+      <div id="page-home">
+        <h2>Dashboard</h2>
+        <p class="balance">Balance: ₹<span id="balance-display">0.00</span></p>
+
+        <div>
+          <label for="amount-input" class="info-label">Enter Amount:</label>
+          <input type="number" id="amount-input" placeholder="₹ Amount" min="1" />
+          <button class="primary" id="deposit-btn">Deposit</button>
+          <button class="primary" id="withdraw-btn" style="margin-top:0.5rem;">Withdraw</button>
+          <button class="primary" id="manual-set-btn" style="margin-top:0.5rem;">Set Balance Manually</button>
+          <p id="amount-error" class="error hidden"></p>
+        </div>
+
+        <h3 class="section-title">Transaction History</h3>
+        <div class="transaction-list" id="transaction-list">
+          <!-- Transactions will appear here -->
+        </div>
+
+        <h3 class="section-title">Loan Offers</h3>
+        <div class="loan-offer">
+          <h3>Home Loan at 7.5% p.a.</h3>
+          <p>Get up to ₹50,00,000 with easy EMIs and low interest.</p>
+          <button class="primary" disabled>Apply Now (Demo)</button>
+        </div>
+        <div class="loan-offer">
+          <h3>Personal Loan at 12% p.a.</h3>
+          <p>Quick approval for your personal needs. Up to ₹5,00,000.</p>
+          <button class="primary" disabled>Apply Now (Demo)</button>
+        </div>
+
+        <div class="scan-pay">
+          <h3>Scan & Pay (Demo)</h3>
+          <p>This feature simulates QR code scanning for payments.</p>
+          <button class="primary" id="scan-pay-btn">Scan QR Code</button>
+          <p id="scan-result"></p>
+        </div>
+      </div>
+
+      <!-- Profile Page -->
+      <div id="page-profile" class="hidden">
+        <h2>My Profile</h2>
+        <div class="profile-item"><span class="info-label">Account Holder:</span> <span class="info-value">Sukhdev Mondal</span></div>
+        <div class="profile-item"><span class="info-label">CRN Number:</span> <span class="info-value">548200078547256499</span></div>
+        <div class="profile-item"><span class="info-label">Aadhar Number:</span> <span class="info-value">671622353722</span></div>
+        <div class="profile-item"><span class="info-label">PAN Number:</span> <span class="info-value">EUKPM1620L</span></div>
+        <div class="profile-item"><span class="info-label">Phone Number:</span> <span class="info-value">6289365052</span></div>
+      </div>
+
+      <!-- Settings Page -->
+      <div id="page-settings" class="hidden">
+        <h2>Settings</h2>
+        <div class="notification-toggle">
+          <input type="checkbox" id="notif-toggle" />
+          <label for="notif-toggle">Enable Notifications</label>
+        </div>
+        <button class="primary" id="device-mgmt-btn">Device Management</button>
+        <button class="primary" id="help-btn" style="margin-top:0.5rem;">Help & Support</button>
+        <button class="primary" id="contact-us-btn" style="margin-top:0.5rem;">Contact Us</button>
+        <button class="primary" id="demat-account-btn" style="margin-top:0.5rem;">Demat Account</button>
+        <button class="primary" id="logout-btn" style="margin-top:2rem; background:#b91c1c;">Logout</button>
+      </div>
+
+      <!-- Device Management Page -->
+      <div id="page-device-mgmt" class="hidden">
+        <h2>Device Management</h2>
+        <p>Currently logged in devices:</p>
+        <ul id="device-list">
+          <li>Web Browser - This device (last active now)</li>
+          <li>Mobile App - Samsung Galaxy S20 (last active 2 days ago)</li>
+          <li>Web Browser - Chrome on Windows 10 (last active 10 days ago)</li>
+        </ul>
+        <button class="primary" id="back-settings-btn" style="margin-top: 1rem;">Back to Settings</button>
+      </div>
+
+      <!-- Help & Support Page -->
+      <div id="page-help" class="hidden">
+        <h2>Help & Support</h2>
+        <p>For assistance, please email <a href="mailto:support@cashnest.com">support@cashnest.com</a> or call <a href="tel:+916289365052">+91 62893 65052</a>.</p>
+        <button class="primary" id="back-settings-btn2" style="margin-top: 1rem;">Back to Settings</button>
+      </div>
+
+      <!-- Contact Us Page -->
+      <div id="page-contact" class="hidden">
+        <h2>Contact Us</h2>
+        <p>Email: <a href="mailto:contact@cashnest.com">contact@cashnest.com</a></p>
+        <p>Phone: <a href="tel:+916289365052">+91 62893 65052</a></p>
+        <p>Address: 123, Demo Street, Kolkata, West Bengal</p>
+        <button class="primary" id="back-settings-btn3" style="margin-top: 1rem;">Back to Settings</button>
+      </div>
+
+      <!-- Demat Account Page -->
+      <div id="page-demat" class="hidden">
+        <h2>Demat Account</h2>
+        <p>This section is under development for the demo.</p>
+        <button class="primary" id="back-settings-btn4" style="margin-top: 1rem;">Back to Settings</button>
+      </div>
+
+    </main>
+    <footer>
+      <button class="active" id="nav-home">Home</button>
+      <button id="nav-profile">Profile</button>
+      <button id="nav-settings">Settings</button>
+    </footer>
+  </section>
+
+</div>
+
+<script>
+  const PASSWORD = "B@8420";
+
+  // App State
+  let balance = 55000078.00; // 8.45 crores approx demo balance
+  let transactions = [];
+
+  // Cached DOM
+  const loginSection = document.getElementById('login-section');
+  const forgotSection = document.getElementById('forgot-password-section');
+  const appSection = document.getElementById('app-section');
+
+  const loginBtn = document.getElementById('login-btn');
+  const forgotBtn = document.getElementById('forgot-password-btn');
+  const backToLoginBtn = document.getElementById('back-to-login-btn');
+  const passwordInput = document.getElementById('password-input');
+  const loginError = document.getElementById('login-error');
+
+  // Main app pages
+  const pageHome = document.getElementById('page-home');
+  const pageProfile = document.getElementById('page-profile');
+  const pageSettings = document.getElementById('page-settings');
+  const pageDeviceMgmt = document.getElementById('page-device-mgmt');
+  const pageHelp = document.getElementById('page-help');
+  const pageContact = document.getElementById('page-contact');
+  const pageDemat = document.getElementById('page-demat');
+
+  const navHome = document.getElementById('nav-home');
+  const navProfile = document.getElementById('nav-profile');
+  const navSettings = document.getElementById('nav-settings');
+
+  const balanceDisplay = document.getElementById('balance-display');
+  const transactionList = document.getElementById('transaction-list');
+
+  const depositBtn = document.getElementById('deposit-btn');
+  const withdrawBtn = document.getElementById('withdraw-btn');
+  const manualSetBtn = document.getElementById('manual-set-btn');
+  const amountInput = document.getElementById('amount-input');
+  const amountError = document.getElementById('amount-error');
+
+  const scanPayBtn = document.getElementById('scan-pay-btn');
+  const scanResult = document.getElementById('scan-result');
+
+  // Settings buttons
+  const deviceMgmtBtn = document.getElementById('device-mgmt-btn');
+  const helpBtn = document.getElementById('help-btn');
+  const contactUsBtn = document.getElementById('contact-us-btn');
+  const dematAccountBtn = document.getElementById('demat-account-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // Back buttons
+  const backSettingsBtns = [
+    document.getElementById('back-settings-btn'),
+    document.getElementById('back-settings-btn2'),
+    document.getElementById('back-settings-btn3'),
+    document.getElementById('back-settings-btn4')
+  ];
+
+  // Helper to show page
+  function showPage(pageId) {
+    // hide all pages
+    [pageHome, pageProfile, pageSettings, pageDeviceMgmt, pageHelp, pageContact, pageDemat].forEach(p => p.classList.add('hidden'));
+    // show requested page
+    document.getElementById(pageId).classList.remove('hidden');
+    // update footer nav active states
+    navHome.classList.remove('active');
+    navProfile.classList.remove('active');
+    navSettings.classList.remove('active');
+    if(pageId === 'page-home') navHome.classList.add('active');
+    else if(pageId === 'page-profile') navProfile.classList.add('active');
+    else if(pageId === 'page-settings') navSettings.classList.add('active');
+  }
+
+  // Show login error
+  function showLoginError(show) {
+    if(show) loginError.classList.remove('hidden');
+    else loginError.classList.add('hidden');
+  }
+
+  // Initialize transaction history demo data
+  function generateFakeTransactions() {
+    transactions = [];
+    let date = new Date(2018, 0, 1);
+    for(let i=0; i<100; i++) {
+      let amount = Math.floor(Math.random() * 80000) + 20000; // 20k to 1L
+      transactions.push({date: date.toISOString().split('T')[0], amount: amount});
+      date.setDate(date.getDate() + Math.floor(Math.random()*15)+5);
+    }
+  }
+
+  // Update balance & transaction display
+  function updateDisplay() {
+    balanceDisplay.textContent = balance.toFixed(2);
+    transactionList.innerHTML = '';
+    transactions.slice().reverse().forEach(t => {
+      const div = document.createElement('div');
+      div.textContent = `${t.date} — ₹${t.amount.toFixed(2)}`;
+      transactionList.appendChild(div);
+    });
+  }
+
+  // Deposit money
+  function deposit() {
+    const amount = parseFloat(amountInput.value);
+    amountError.textContent = '';
+    amountError.classList.add('hidden');
+    if(isNaN(amount) || amount <= 0) {
+      amountError.textContent = 'Please enter a valid amount greater than 0.';
+      amountError.classList.remove('hidden');
+      return;
+    }
+    balance += amount;
+    transactions.push({date: new Date().toISOString().split('T')[0], amount: amount});
+    updateDisplay();
+    amountInput.value = '';
+  }
+
+  // Withdraw money
+  function withdraw() {
+    const amount = parseFloat(amountInput.value);
+    amountError.textContent = '';
+    amountError.classList.add('hidden');
+    if(isNaN(amount) || amount <= 0) {
+      amountError.textContent = 'Please enter a valid amount greater than 0.';
+      amountError.classList.remove('hidden');
+      return;
+    }
+    if(amount > balance) {
+      amountError.textContent = 'Insufficient balance!';
+      amountError.classList.remove('hidden');
+      return;
+    }
+    balance -= amount;
+    transactions.push({date: new Date().toISOString().split('T')[0], amount: -amount});
+    updateDisplay();
+    amountInput.value = '';
+  }
+
+  // Manual set balance
+  function manualSetBalance() {
+    const amount = parseFloat(amountInput.value);
+    amountError.textContent = '';
+    amountError.classList.add('hidden');
+    if(isNaN(amount) || amount < 0) {
+      amountError.textContent = 'Please enter a valid amount (0 or more).';
+      amountError.classList.remove('hidden');
+      return;
+    }
+    balance = amount;
+    updateDisplay();
+    amountInput.value = '';
+  }
+
+  // Simulate Scan & Pay
+  function scanAndPay() {
+    scanResult.textContent = 'Simulating QR scan...';
+    setTimeout(() => {
+      const payAmount = (Math.random()*5000 + 100).toFixed(2);
+      if(payAmount > balance) {
+        scanResult.textContent = 'Payment failed: Insufficient balance.';
+        return;
+      }
+      balance -= payAmount;
+      transactions.push({date: new Date().toISOString().split('T')[0], amount: -parseFloat(payAmount)});
+      updateDisplay();
+      scanResult.textContent = `Payment of ₹${payAmount} successful via QR code.`;
+    }, 2000);
+  }
+
+  // Event Listeners
+  loginBtn.onclick = () => {
+    const pwd = passwordInput.value.trim();
+    if(pwd === PASSWORD) {
+      showLoginError(false);
+      loginSection.classList.add('hidden');
+      appSection.classList.remove('hidden');
+      generateFakeTransactions();
+      updateDisplay();
+      showPage('page-home');
+      passwordInput.value = '';
+    } else {
+      showLoginError(true);
+    }
+  };
+
+  forgotBtn.onclick = () => {
+    loginSection.classList.add('hidden');
+    forgotSection.classList.remove('hidden');
+  };
+
+  backToLoginBtn.onclick = () => {
+    forgotSection.classList.add('hidden');
+    loginSection.classList.remove('hidden');
+  };
+
+  navHome.onclick = () => showPage('page-home');
+  navProfile.onclick = () => showPage('page-profile');
+  navSettings.onclick = () => showPage('page-settings');
+
+  depositBtn.onclick = deposit;
+  withdrawBtn.onclick = withdraw;
+  manualSetBtn.onclick = manualSetBalance;
+
+  scanPayBtn.onclick = scanAndPay;
+
+  deviceMgmtBtn.onclick = () => showPage('page-device-mgmt');
+  helpBtn.onclick = () => showPage('page-help');
+  contactUsBtn.onclick = () => showPage('page-contact');
+  dematAccountBtn.onclick = () => showPage('page-demat');
+
+  logoutBtn.onclick = () => {
+    if(confirm('Are you sure you want to logout?')) {
+      appSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+      passwordInput.value = '';
+      amountInput.value = '';
+      scanResult.textContent = '';
+      showLoginError(false);
+    }
+  };
+
+  backSettingsBtns.forEach(btn => {
+    if(btn) btn.onclick = () => showPage('page-settings');
+  });
+
+  // Enter key login support
+  passwordInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter') loginBtn.click();
+  });
+
+</script>import React, { useState } from 'react';
+import { Eye, EyeOff, User, CreditCard, ArrowRightLeft, FileText, HelpCircle, Mail, Users } from 'lucide-react';
+
+const beneficiaries = [
+  { name: 'Rahul Dhar', account: '144521478445201' },
+  { name: 'Dazy Lucas', account: '4571147823301457' },
+  { name: 'Diparnita', account: '5554712248500145' }
+];
+
+const HomePage = () => {
+  const [showBalance, setShowBalance] = useState(false);
+  const [showBeneficiaries, setShowBeneficiaries] = useState(false);
+
+  const balance = 54871202;
+
+  return (
+    <div className="min-h-screen bg-gray-100 font-sans">
+      {/* Header */}
+      <header className="bg-blue-900 text-white p-4 flex justify-between items-center shadow-md">
+        <h1 className="text-xl font-bold">Sukhdev Mondal</h1>
+        <div className="flex items-center space-x-2">
+          <div className="text-lg font-semibold">JWcashnest BANK</div>
+          <div className="bg-yellow-400 text-blue-900 font-bold px-2 py-1 rounded">JW</div>
+        </div>
+      </header>
+
+      {/* Balance Card */}
+      <div className="p-4">
+        <div className="bg-white rounded-2xl shadow-md p-4 flex justify-between items-center max-w-md mx-auto">
+          <div>
+            <p className="text-sm text-gray-600">Account Balance</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              ₹ {showBalance ? balance.toLocaleString() : '**** ****'}
+            </h2>
+          </div>
+          <button onClick={() => setShowBalance(!showBalance)} title={showBalance ? "Hide Balance" : "Show Balance"}>
+            {showBalance ? <Eye size={24} /> : <EyeOff size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Options Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 max-w-4xl mx-auto">
+        <Card icon={<ArrowRightLeft />} label="Transfer Money" />
+        <Card icon={<CreditCard />} label="Loan & Card Offers" />
+        <Card icon={<User />} label="Account Overview" onClick={() => alert(`Name: Sukhdev Mondal\nBalance: ₹${balance.toLocaleString()}`)} />
+        <Card icon={<FileText />} label="Statement" onClick={() => alert('Avg. ₹65,000/month spent from 2017 to 2025')} />
+        <Card icon={<Users />} label="Beneficiary Accounts" onClick={() => setShowBeneficiaries(!showBeneficiaries)} />
+        <Card icon={<HelpCircle />} label="Help & Support" />
+        <Card icon={<Mail />} label="Contact Us" onClick={() => alert('Email: support@jwcashnest.com')} />
+      </div>
+
+      {/* Beneficiaries */}
+      {showBeneficiaries && (
+        <div className="max-w-2xl mx-auto p-4">
+          <h3 className="text-lg font-semibold mb-2">Saved Beneficiaries</h3>
+          <ul className="bg-white rounded-xl shadow-md divide-y">
+            {beneficiaries.map((b, idx) => (
+              <li key={idx} className="p-3">
+                <strong>{b.name}</strong> - {b.account}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Card = ({ icon, label, onClick }) => (
+  <div
+    className="bg-white rounded-2xl shadow hover:shadow-lg p-4 flex flex-col items-center justify-center cursor-pointer transition"
+    onClick={onClick}
+  >
+    <div className="text-blue-900 mb-2">{icon}</div>
+    <div className="text-sm font-medium text-gray-700 text-center">{label}</div>
+  </div>
+);
+
+export default HomePage;
+
+
+</body>
+</html>
